@@ -94,9 +94,11 @@ function onDataReceived(data, text) {
     }
     for(i=0;i<data["series"].length;i++) {
         var series = { };
-        series.label = data["series"][i];
-        series.data = data[data["series"][i]];
-        addItem('<td>' + new Date(series.data[series.data.length-1][0]) + "</td><td>" + series.label + "</td><td>" + series.data[series.data.length-1][1]+"</td>");
+	try {
+            series.label = data["series"][i];
+            series.data = data[data["series"][i]];
+            addItem('<td>' + new Date(series.data[series.data.length-1][0]) + "</td><td>" + series.label + "</td><td>" + series.data[series.data.length-1][1]+"</td>"); }
+	catch(err) { }; 
     }
 }
 

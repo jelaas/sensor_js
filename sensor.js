@@ -203,6 +203,7 @@ function drawplot(options) {
 	
 	for(i=0;i<sensordat["series"].length;i++) {
 	    var series = { };
+	    try {
 	    series.label = sensordat["series"][i];
 	    series.data = sensordat[sensordat["series"][i]];
 	    if(sensordat[sensordat["series"][i]]) {
@@ -211,7 +212,8 @@ function drawplot(options) {
 		}
 	    }
 	    addItem('<td>' + series.label + "</td><td>" + series.data[series.data.length-1][1]+"</td>");
-	    data.push(series);
+		data.push(series); }
+	    catch(err) {};
 	}
 	
         // and plot all we got
