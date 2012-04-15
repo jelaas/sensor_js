@@ -1,3 +1,19 @@
+function getQuerystring(key, default_)
+{
+    if (default_==null) default_="";
+    key = key.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
+    var regex = new RegExp("[\\?&]"+key+"=([^&#]*)");
+    var qs = regex.exec(window.location.href);
+    if(qs == null)
+	return default_;
+  else
+      return qs[1];
+}
+
+function addItem(s) {
+    $('#items').prepend('<tr>' + s + '</tr>');
+}
+
 function insertline(line, sensordat) {
     var elem;
     var i, temp, tim, rssi, rh, vmcu;
@@ -24,7 +40,7 @@ function insertline(line, sensordat) {
     //            } catch(err) { return null; }
     if(tim == 1) return null;
 
-    if(temp) { 
+    if(temp !== undefined) { 
 	if(!sensordat[ sensorid + "-temp" ]) {
 	    sensordat[ sensorid + "-temp" ] = [ ];
 	    sensordat[ "sensors" ].push(sensorid);
@@ -34,21 +50,36 @@ function insertline(line, sensordat) {
 	    sensordat[ "series" ].push(sensorid+"-vmcu");
 	    sensordat[ sensorid + "-temp" ].yaxis = 1;
 	}
-	sensordat[ sensorid + "-temp" ].push( [ tim, temp ] );
+	if(sensordat[ sensorid + "-temp" ].length == 0)
+	    sensordat[ sensorid + "-temp" ].push( [ tim, temp ] );
+	else {
+	    if( Math.abs(sensordat[ sensorid + "-temp" ][sensordat[ sensorid + "-temp" ].length-1][1] - temp) > 0.2)
+		sensordat[ sensorid + "-temp" ].push( [ tim, temp ] );
+	}
     }
-    if(rh) { 
+    if(rh !== undefined) { 
 	if(!sensordat[ sensorid + "-rh" ]) {
 	    sensordat[ sensorid + "-rh" ] = [ ];
 	    sensordat[ sensorid + "-rh" ].yaxis = 2;
 	}
-	sensordat[ sensorid + "-rh" ].push( [ tim, rh ] );
+	if(sensordat[ sensorid + "-rh" ].length == 0)
+	    sensordat[ sensorid + "-rh" ].push( [ tim, rh ] );
+	else {
+	    if( Math.abs(sensordat[ sensorid + "-rh" ][sensordat[ sensorid + "-rh" ].length-1][1] - rh) > 0.2)
+		sensordat[ sensorid + "-rh" ].push( [ tim, rh ] );
+	}
     }
-    if(rssi) { 
+    if(rssi !== undefined) { 
 	if(!sensordat[ sensorid + "-rssi" ])
 	    sensordat[ sensorid + "-rssi" ] = [ ];
-	sensordat[ sensorid + "-rssi" ].push( [ tim, rssi ] );
+	if(sensordat[ sensorid + "-rssi" ].length == 0)
+	    sensordat[ sensorid + "-rssi" ].push( [ tim, rssi ] );
+	else {
+            if( Math.abs(sensordat[ sensorid + "-rssi" ][sensordat[ sensorid + "-rssi" ].length-1][1] - rssi) > 0.2)
+		sensordat[ sensorid + "-rssi" ].push( [ tim, rssi ] );
+	}
     }
-    if(vmcu) { 
+    if(vmcu !== undefined) { 
 	if(!sensordat[ sensorid + "-vmcu" ])
 	    sensordat[ sensorid + "-vmcu" ] = [ ];
 	sensordat[ sensorid + "-vmcu" ].push( [ tim, vmcu ] );
@@ -142,94 +173,112 @@ function binarysearch(url, target, start, end) {
     return start;
 }
 
+function drawplot(options) {
+    var a;
+    var placeholder = $("#placeholder");
+    var span;
+    span = parseInt(getQuerystring('span'))*60*1000;
+    if(span < 1000) span = 5*60*1000;
+
+    
+    // find the URL in the link right next to us 
+    var dataurl = "sensor.dat";
+    
+    // then fetch the data with jQuery
+    function onDataReceived(rawseries, status, xhr) {
+        // extract the first coordinate pair so you can see that
+        // data is now an ordinary Javascript object
+        var arr, i, step;
+        var firstcoordinate;
+	var sensordat = { };
+	sensordat["sensors"] = [ ];
+	sensordat["series"] = [ ];
+	
+	insertdata(rawseries, sensordat);
+	data = [];
+
+	while($('#items tr').length > 0) {
+	    $('#items').children().eq(0).remove();
+	}
+	
+	for(i=0;i<sensordat["series"].length;i++) {
+	    var series = { };
+	    series.label = sensordat["series"][i];
+	    series.data = sensordat[sensordat["series"][i]];
+	    if(sensordat[sensordat["series"][i]]) {
+		if(sensordat[sensordat["series"][i]].yaxis) {
+		    series.yaxis = sensordat[sensordat["series"][i]].yaxis;
+		}
+	    }
+	    addItem('<td>' + series.label + "</td><td>" + series.data[series.data.length-1][1]+"</td>");
+	    data.push(series);
+	}
+	
+        // and plot all we got
+	options.xaxis = {  axisLabelUseCanvas:true, axisLabel: 'Datum', min: Date.now() - span, max: Date.now()-0, mode: "time", timeformat: "%d/%m %h:%M" };
+        $.plot(placeholder, data, options);
+    }
+    
+    a = $.ajax({
+	beforeSend: function(xhrObj){
+	    var rh;
+	    rh = "bytes=0-2";
+	    xhrObj.setRequestHeader("Range", rh);
+	},
+        url: dataurl,
+        method: "GET",
+        async: false,
+        dataType: 'text'
+    });
+    var datasize = parseInt(a.getResponseHeader('Content-Range').split('/')[1]);
+    
+    start = binarysearch(dataurl, Date.now() - span, 0, datasize-0);
+    console.log("starting at " + start);
+    
+    a = $.ajax({
+	beforeSend: function(xhrObj){
+	    var rh;
+	    rh = "bytes=" + start + "-" + datasize;
+	    xhrObj.setRequestHeader("Range", rh);
+	},
+        url: dataurl,
+        method: 'GET',
+        dataType: 'text',
+        success: onDataReceived
+    });
+};
+    
+
+
 $(function () {
     // shorthand for: $(document).ready(callback)
     
     var options = {
         lines: { show: true },
-//        points: { show: true },
-        xaxis: {  axisLabelUseCanvas:true, axisLabel: 'Datum', min: Date.now() - 100000000, max: Date.now()-0, mode: "time", timeformat: "%d/%m %h:%M" },
-        yaxes: [ { axisLabelUseCanvas:true, axisLabel: 'Temperatur C' , position: 'right'}, { axisLabelUseCanvas:true, axisLabel: 'Relativ luftfuktighet', position: 'left' } ],
+        yaxes: [ { panRange: false, axisLabelUseCanvas:true, axisLabel: 'Temperature C' , position: 'right'}, { panRange: false, axisLabelUseCanvas:true, axisLabel: 'Relative humidity', min: 0, max: 100, position: 'left' } ],
 	legend: { position: 'nw' },
         pan: {
             interactive: true
         }
     };
     var data = [];
+    var span;
     var placeholder = $("#placeholder");
 
+    span = parseInt(getQuerystring('span'))*60*1000;
+    if(span < 1000) span = 5*60*1000;
+
     document.cookie = "temperature=20; max-age=" + 60*60*24*365;
-    
+
     $.plot(placeholder, data, options);
     
     // fetch one series, adding to what we got
     var alreadyFetched = {};
     
+    drawplot(options);
     $("input.fetchSeries").click(function () {
-        var button = $(this);
-        var a;
-	
-        // find the URL in the link right next to us 
-        var dataurl = "sensor.dat";
-	
-        // then fetch the data with jQuery
-        function onDataReceived(rawseries, status, xhr) {
-            // extract the first coordinate pair so you can see that
-            // data is now an ordinary Javascript object
-            var arr, i, step;
-            var firstcoordinate;
-	    var sensordat = { };
-	    sensordat["sensors"] = [ ];
-	    sensordat["series"] = [ ];
-
-	    insertdata(rawseries, sensordat);
-	    data = [];
-	    for(i=0;i<sensordat["series"].length;i++) {
-		var series = { };
-		series.label = sensordat["series"][i];
-		series.data = sensordat[sensordat["series"][i]];
-		if(sensordat[sensordat["series"][i]]) {
-		    if(sensordat[sensordat["series"][i]].yaxis) {
-			series.yaxis = sensordat[sensordat["series"][i]].yaxis;
-		    }
-		}
-		data.push(series);
-	    }
-
-//            button.siblings('span').text('Fetched ' + series.label + ', first point: ' + firstcoordinate);
-//            button.siblings('span').text(' Last reading ' + series.label + ': ' + series.data[series.data.length-1][1]);
-	    
-            
-            // and plot all we got
-	    options.xaxis = {  axisLabelUseCanvas:true, axisLabel: 'Datum', min: Date.now() - 100000000, max: Date.now()-0, mode: "time", timeformat: "%d/%m %h:%M" };
-            $.plot(placeholder, data, options);
-        }
-        
-	a = $.ajax({
-            url: dataurl,
-            method: "HEAD",
-            async: false,
-            dataType: 'text'
-        });
-	var datasize = a.getResponseHeader('Content-Length');
-
-//	start = binarysearch(dataurl, Date.now() - 100000000, 0, datasize-0);
-	start = binarysearch(dataurl, Date.now() - 100000000, 0, datasize-0);
-	console.log("starting at " + start);
-	
-        a = $.ajax({
-	    beforeSend: function(xhrObj){
-		var rh;
-		rh = "bytes=" + start + "-" + datasize;
-		xhrObj.setRequestHeader("Range", rh);
-	    },
-            url: dataurl,
-            method: 'GET',
-            dataType: 'text',
-            success: onDataReceived
-        });
+	drawplot(options);
     });
-    
     
     // initiate a recurring data update
     $("input.dataUpdate").click(function () {
