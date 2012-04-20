@@ -14,6 +14,17 @@ function addItem(s) {
     $('#items').prepend('<tr>' + s + '</tr>');
 }
 
+function signif(sensordat, sensorid, name, value, tim, threshold)
+{
+    if(sensordat[ sensorid + name ].length == 0)
+        return 1;
+    if(tim - sensordat[ sensorid + name ][sensordat[ sensorid + name ].length-1][0] > ((60*5)-1)*1000)
+        return 1;
+    if(Math.abs(sensordat[ sensorid + name ][sensordat[ sensorid + name ].length-1][1] - value > threshold))
+        return 1;
+    return 0;
+}
+
 function insertline(line, sensordat) {
     var elem;
     var i, temp, tim, rssi, rh, vmcu;
@@ -50,39 +61,28 @@ function insertline(line, sensordat) {
 	    sensordat[ "series" ].push(sensorid+"-vmcu");
 	    sensordat[ sensorid + "-temp" ].yaxis = 1;
 	}
-	if(sensordat[ sensorid + "-temp" ].length == 0)
+	if(signif(sensordat, sensorid, "-temp", temp, tim, 0.2) == 1)
 	    sensordat[ sensorid + "-temp" ].push( [ tim, temp ] );
-	else {
-	    if( Math.abs(sensordat[ sensorid + "-temp" ][sensordat[ sensorid + "-temp" ].length-1][1] - temp) > 0.2)
-		sensordat[ sensorid + "-temp" ].push( [ tim, temp ] );
-	}
     }
     if(rh !== undefined) { 
 	if(!sensordat[ sensorid + "-rh" ]) {
 	    sensordat[ sensorid + "-rh" ] = [ ];
 	    sensordat[ sensorid + "-rh" ].yaxis = 2;
 	}
-	if(sensordat[ sensorid + "-rh" ].length == 0)
+	if(signif(sensordat, sensorid, "-rh", rh, tim, 0.2) == 1)
 	    sensordat[ sensorid + "-rh" ].push( [ tim, rh ] );
-	else {
-	    if( Math.abs(sensordat[ sensorid + "-rh" ][sensordat[ sensorid + "-rh" ].length-1][1] - rh) > 0.2)
-		sensordat[ sensorid + "-rh" ].push( [ tim, rh ] );
-	}
     }
     if(rssi !== undefined) { 
 	if(!sensordat[ sensorid + "-rssi" ])
 	    sensordat[ sensorid + "-rssi" ] = [ ];
-	if(sensordat[ sensorid + "-rssi" ].length == 0)
+	if(signif(sensordat, sensorid, "-rssi", rssi, tim, 0.2) == 1)
 	    sensordat[ sensorid + "-rssi" ].push( [ tim, rssi ] );
-	else {
-            if( Math.abs(sensordat[ sensorid + "-rssi" ][sensordat[ sensorid + "-rssi" ].length-1][1] - rssi) > 0.2)
-		sensordat[ sensorid + "-rssi" ].push( [ tim, rssi ] );
-	}
     }
     if(vmcu !== undefined) { 
 	if(!sensordat[ sensorid + "-vmcu" ])
 	    sensordat[ sensorid + "-vmcu" ] = [ ];
-	sensordat[ sensorid + "-vmcu" ].push( [ tim, vmcu ] );
+	if(signif(sensordat, sensorid, "-vmcu", vmcu, tim, 0.5) == 1)
+            sensordat[ sensorid + "-vmcu" ].push( [ tim, vmcu ] );
     }
 }
 
@@ -211,8 +211,11 @@ function drawplot(options) {
 		    series.yaxis = sensordat[sensordat["series"][i]].yaxis;
 		}
 	    }
+		try {
 	    addItem('<td>' + series.label + "</td><td>" + series.data[series.data.length-1][1]+"</td>");
-		data.push(series); }
+		data.push(series);
+		} catch(err) {}
+	    }
 	    catch(err) {};
 	}
 	
