@@ -220,7 +220,7 @@ function drawplot(options) {
 	}
 	
         // and plot all we got
-	options.xaxis = {  axisLabelUseCanvas:true, axisLabel: 'Datum', min: Date.now() - span, max: Date.now()-0, mode: "time", timeformat: "%d/%m %h:%M" };
+	options.xaxis = {  axisLabelUseCanvas:true, axisLabel: 'Date', min: Date.now() - span, max: Date.now()-0, mode: "time", timeformat: "%d/%m %h:%M" };
         $.plot(placeholder, data, options);
     }
     
@@ -269,6 +269,9 @@ $(function () {
     var data = [];
     var span;
     var placeholder = $("#placeholder");
+
+    var loc = $(location).attr('href');
+    $('a#back').attr('href', loc.substring(0, loc.lastIndexOf('/') + 1));
 
     span = parseInt(getQuerystring('span'))*60*1000;
     if(span < 1000) span = 5*60*1000;
