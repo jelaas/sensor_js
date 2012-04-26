@@ -36,8 +36,13 @@ function insertline(line, sensordat) {
     for(i=0;i<elem.length;i++) { 
         if(elem[i].substr(0,3) == "UT=")
 	    tim=parseInt(elem[i].substr(3))*1000;
-        if(elem[i].substr(0,3) == "ID=")
-	    sensorid = elem[i];
+        if(elem[i].substr(0,3) == "ID=") {
+	    sensorid = elem[i].substr(3);
+	    if(localStorage[sensorid] !== undefined) {
+		console.log("stored name = " + localStorage[sensorid]);
+		sensorid = localStorage[sensorid];
+	    }
+	}
         if(elem[i].substr(0,2) == "T=")
             temp=parseFloat(elem[i].substr(2));
         if(elem[i].substr(0,3) == "RH=")

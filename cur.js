@@ -1,9 +1,20 @@
 function addItem(s) {
     $('#items').prepend('<tr>' + s + '</tr>');
 }
+function addSensor(id, s) {
+    $('#sensors').prepend('<li><input type="text" size="30" name="' + id + '" value="' + s + '" disabled /><tt id="' + id + '">edit</tt> <tt id="' + id + 'save">save</tt></li>');
+    $("#" + id).click(function() {
+	$('input[name=' + id +']').removeAttr('disabled');
+//	alert("Handler for .click(" + id + ") called:" + s);
+    });
+    $("#" + id + "save").click(function() {
+	$('input[name=' + id +']').attr('disabled', true);
+	localStorage[id] = $('input[name=' + id +']').val();
+    });
+}
 
 function insertline(line, sensordat) {
-    var elem;
+    var elem, sensorid, sensorname;
     var i, temp, tim, rssi, rh, vmcu;
 
     tim=1;
@@ -13,8 +24,10 @@ function insertline(line, sensordat) {
     for(i=0;i<elem.length;i++) { 
         if(elem[i].substr(0,3) == "UT=")
 	    tim=parseInt(elem[i].substr(3))*1000;
-        if(elem[i].substr(0,3) == "ID=")
-	    sensorid = elem[i];
+        if(elem[i].substr(0,3) == "ID=") {
+	    sensorid = elem[i].substr(3);
+	    sensorname = localStorage[sensorid];
+	}
         if(elem[i].substr(0,2) == "T=")
             temp=parseFloat(elem[i].substr(2));
         if(elem[i].substr(0,3) == "RH=")
@@ -29,48 +42,48 @@ function insertline(line, sensordat) {
     if(tim == 1) return null;
 
     if(temp !== undefined) { 
-	if(!sensordat[ sensorid + "-temp" ]) {
-	    sensordat[ sensorid + "-temp" ] = [ ];
+	if(!sensordat[ sensorname + "-temp" ]) {
+	    sensordat[ sensorname + "-temp" ] = [ ];
 	    sensordat[ "sensors" ].push(sensorid);
-	    sensordat[ "series" ].push(sensorid+"-temp");
-	    sensordat[ "series" ].push(sensorid+"-rh");
-	    sensordat[ "series" ].push(sensorid+"-rssi");
-	    sensordat[ "series" ].push(sensorid+"-vmcu");
-	    sensordat[ sensorid + "-temp" ].yaxis = 1;
+	    sensordat[ "series" ].push(sensorname+"-temp");
+	    sensordat[ "series" ].push(sensorname+"-rh");
+	    sensordat[ "series" ].push(sensorname+"-rssi");
+	    sensordat[ "series" ].push(sensorname+"-vmcu");
+	    sensordat[ sensorname + "-temp" ].yaxis = 1;
 	}
-	if(sensordat[ sensorid + "-temp" ].length == 0)
-	    sensordat[ sensorid + "-temp" ].push( [ tim, temp ] );
+	if(sensordat[ sensorname + "-temp" ].length == 0)
+	    sensordat[ sensorname + "-temp" ].push( [ tim, temp ] );
 	else {
-	    if( Math.abs(sensordat[ sensorid + "-temp" ][sensordat[ sensorid + "-temp" ].length-1][1] - temp) > 0.2)
-		sensordat[ sensorid + "-temp" ].push( [ tim, temp ] );
+	    if( Math.abs(sensordat[ sensorname + "-temp" ][sensordat[ sensorname + "-temp" ].length-1][1] - temp) > 0.2)
+		sensordat[ sensorname + "-temp" ].push( [ tim, temp ] );
 	}
     }
     if(rh !== undefined) { 
-	if(!sensordat[ sensorid + "-rh" ]) {
-	    sensordat[ sensorid + "-rh" ] = [ ];
-	    sensordat[ sensorid + "-rh" ].yaxis = 2;
+	if(!sensordat[ sensorname + "-rh" ]) {
+	    sensordat[ sensorname + "-rh" ] = [ ];
+	    sensordat[ sensorname + "-rh" ].yaxis = 2;
 	}
-	if(sensordat[ sensorid + "-rh" ].length == 0)
-	    sensordat[ sensorid + "-rh" ].push( [ tim, rh ] );
+	if(sensordat[ sensorname + "-rh" ].length == 0)
+	    sensordat[ sensorname + "-rh" ].push( [ tim, rh ] );
 	else {
-	    if( Math.abs(sensordat[ sensorid + "-rh" ][sensordat[ sensorid + "-rh" ].length-1][1] - rh) > 0.2)
-		sensordat[ sensorid + "-rh" ].push( [ tim, rh ] );
+	    if( Math.abs(sensordat[ sensorname + "-rh" ][sensordat[ sensorname + "-rh" ].length-1][1] - rh) > 0.2)
+		sensordat[ sensorname + "-rh" ].push( [ tim, rh ] );
 	}
     }
     if(rssi !== undefined) { 
-	if(!sensordat[ sensorid + "-rssi" ])
-	    sensordat[ sensorid + "-rssi" ] = [ ];
-	if(sensordat[ sensorid + "-rssi" ].length == 0)
-	    sensordat[ sensorid + "-rssi" ].push( [ tim, rssi ] );
+	if(!sensordat[ sensorname + "-rssi" ])
+	    sensordat[ sensorname + "-rssi" ] = [ ];
+	if(sensordat[ sensorname + "-rssi" ].length == 0)
+	    sensordat[ sensorname + "-rssi" ].push( [ tim, rssi ] );
 	else {
-            if( Math.abs(sensordat[ sensorid + "-rssi" ][sensordat[ sensorid + "-rssi" ].length-1][1] - rssi) > 0.2)
-		sensordat[ sensorid + "-rssi" ].push( [ tim, rssi ] );
+            if( Math.abs(sensordat[ sensorname + "-rssi" ][sensordat[ sensorname + "-rssi" ].length-1][1] - rssi) > 0.2)
+		sensordat[ sensorname + "-rssi" ].push( [ tim, rssi ] );
 	}
     }
     if(vmcu !== undefined) { 
-	if(!sensordat[ sensorid + "-vmcu" ])
-	    sensordat[ sensorid + "-vmcu" ] = [ ];
-	sensordat[ sensorid + "-vmcu" ].push( [ tim, vmcu ] );
+	if(!sensordat[ sensorname + "-vmcu" ])
+	    sensordat[ sensorname + "-vmcu" ] = [ ];
+	sensordat[ sensorname + "-vmcu" ].push( [ tim, vmcu ] );
     }
 }
 
@@ -92,10 +105,17 @@ function onDataReceived(data, text) {
     while($('#items tr').length > 0) {
         $('#items').children().eq(0).remove();
     }
+    for(i=0;i<data["sensors"].length;i++) {
+	if( (localStorage[data["sensors"][i]] === undefined) ||
+	    (localStorage[data["sensors"][i]] === null) ||
+	    (localStorage[data["sensors"][i]] == 'null'))
+	    localStorage[data["sensors"][i]] = data["sensors"][i];
+	addSensor(data["sensors"][i], localStorage[data["sensors"][i]]);
+    }
     for(i=0;i<data["series"].length;i++) {
         var series = { };
 	try {
-            series.label = data["series"][i];
+	    series.label = data["series"][i];
             series.data = data[data["series"][i]];
             addItem('<td>' + new Date(series.data[series.data.length-1][0]) + "</td><td>" + series.label + "</td><td>" + series.data[series.data.length-1][1]+"</td>"); }
 	catch(err) { }; 
