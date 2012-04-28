@@ -1,3 +1,5 @@
+function esc(str) { return str.replace(/[-#;&,\.\+\*~':"!\^\$\[\]\(\)=>|\/\\]/g, '\\$&'); }
+
 function getQuerystring(key, default_)
 {
     if (default_==null) default_="";
@@ -215,13 +217,20 @@ function drawplot(options) {
 		if(sensordat[sensordat["series"][i]].yaxis) {
 		    series.yaxis = sensordat[sensordat["series"][i]].yaxis;
 		}
-	    }
 		try {
-	    addItem('<td>' + series.label + "</td><td>" + series.data[series.data.length-1][1]+"</td>");
+		addItem('<td><input type="checkbox" name="' + series.label + '" id="' + esc(series.label) + '" checked />' + series.label + "</td><td>" + series.data[series.data.length-1][1]+"</td>");
+		$('#' + esc(series.label) ).click(function() {
+		    if($('#' + esc(series.label) ).is(':checked')) {
+			$('#' + esc(series.label) ).attr('checked', false);
+		    } else {
+			$('#' + esc(series.label) ).attr('checked', true);
+		    }
+		});
 		data.push(series);
 		} catch(err) {}
+	    } catch(err) {};
 	    }
-	    catch(err) {};
+
 	}
 	
         // and plot all we got
