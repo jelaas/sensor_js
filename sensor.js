@@ -49,11 +49,12 @@ function insertline(line, sensordat) {
             temp=parseFloat(elem[i].substr(2));
         if(elem[i].substr(0,3) == "RH=")
             rh=parseFloat(elem[i].substr(3));
-        if(elem[i].substr(0,5) == "RSSI=")
-            rssi=parseFloat(elem[i].substr(5));
-        if(elem[i].substr(0,6) == "V_MCU=")
-            vmcu=parseFloat(elem[i].substr(6))*10;
-
+	if(localStorage["hw"] == "yes") {
+            if(elem[i].substr(0,5) == "RSSI=")
+		rssi=parseFloat(elem[i].substr(5));
+            if(elem[i].substr(0,6) == "V_MCU=")
+		vmcu=parseFloat(elem[i].substr(6))*10;
+	}
     }
     //            } catch(err) { return null; }
     if(tim == 1) return null;
