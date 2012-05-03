@@ -227,8 +227,8 @@ function drawplot(options) {
 			});
 			data.push(series);
 		    } catch(err) {}
-		} catch(err) {};
-	    }
+		}
+	    } catch(err) {};
 	}
 	
         // and plot all we got
