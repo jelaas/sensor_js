@@ -44,8 +44,10 @@ function insertline(line, sensordat) {
 		sensorid = localStorage[sensorid];
 	    }
 	}
-        if(elem[i].substr(0,2) == "T=")
-            temp=parseFloat(elem[i].substr(2));
+	if(localStorage[sensorid+"-temp"] != "no") {
+            if(elem[i].substr(0,2) == "T=")
+		temp=parseFloat(elem[i].substr(2));
+	}
 	if(localStorage[sensorid+"-rh"] == "yes") {
             if(elem[i].substr(0,3) == "RH=")
 		rh=parseFloat(elem[i].substr(3));
