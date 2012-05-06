@@ -44,22 +44,14 @@ function insertline(line, sensordat) {
 		sensorid = localStorage[sensorid];
 	    }
 	}
-	if(localStorage[sensorid+"-temp"] != "no") {
-            if(elem[i].substr(0,2) == "T=")
-		temp=parseFloat(elem[i].substr(2));
-	}
-	if(localStorage[sensorid+"-rh"] == "yes") {
-            if(elem[i].substr(0,3) == "RH=")
-		rh=parseFloat(elem[i].substr(3));
-	}
-	if(localStorage[sensorid+"-rssi"] == "yes") {
-            if(elem[i].substr(0,5) == "RSSI=")
-		rssi=parseFloat(elem[i].substr(5));
-	}
-	if(localStorage[sensorid+"-vmcu"] == "yes") {
-            if(elem[i].substr(0,6) == "V_MCU=")
-		vmcu=parseFloat(elem[i].substr(6))*10;
-	}
+        if(elem[i].substr(0,2) == "T=")
+	    temp=parseFloat(elem[i].substr(2));
+        if(elem[i].substr(0,3) == "RH=")
+	    rh=parseFloat(elem[i].substr(3));
+        if(elem[i].substr(0,5) == "RSSI=")
+	    rssi=parseFloat(elem[i].substr(5));
+        if(elem[i].substr(0,6) == "V_MCU=")
+	    vmcu=parseFloat(elem[i].substr(6))*10;
     }
     //            } catch(err) { return null; }
     if(tim == 1) return null;
@@ -218,8 +210,6 @@ function drawplot(options) {
 
 	    series.label = sensordat["series"][i];
 
-	    console.log("Series: " + series.label + " = " + localStorage[series.label]);
-
 	    series.data = sensordat[sensordat["series"][i]];
 	    if(sensordat[sensordat["series"][i]]) {
 		if(sensordat[sensordat["series"][i]].yaxis) {
@@ -227,7 +217,6 @@ function drawplot(options) {
 		}
 		var ischecked = "checked";
 		var value;
-		console.log(series.label + " = " + localStorage[series.label]);
 		if(series.data[series.data.length-1]) value = series.data[series.data.length-1][1];
 		else value="na";
 		if(localStorage[series.label] == "no") ischecked = "";
@@ -236,15 +225,15 @@ function drawplot(options) {
 		    return function () {
 			if(this.checked) {
 			    localStorage[label] = "yes";
-			    console.log(label + " = " + localStorage[label]);
 			} else {
 			    localStorage[label] = "no";
-			    console.log(label + " = " + localStorage[label]);
 			}
 		    }
 		}(series.label));
-		if(value != "na")
-		    data.push(series);
+		if(value != "na") {
+		    if(localStorage[series.label] != "no")
+			data.push(series);
+		}
 	    }
 	}
 	
