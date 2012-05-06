@@ -1,4 +1,4 @@
-function esc(str) { return str.replace(/[-#;&,\.\+\*~':"!\^\$\[\]\(\)=>|\/\\]/g, '\\$&'); }
+function esc(str) { return str.replace(/[#;&,\.\+\*~':"!\^\$\[\]\(\)=>|\/\\]/g, '\\$&'); }
 
 function getQuerystring(key, default_)
 {
@@ -41,17 +41,20 @@ function insertline(line, sensordat) {
         if(elem[i].substr(0,3) == "ID=") {
 	    sensorid = elem[i].substr(3);
 	    if(localStorage[sensorid] !== undefined) {
-		console.log("stored name = " + localStorage[sensorid]);
 		sensorid = localStorage[sensorid];
 	    }
 	}
         if(elem[i].substr(0,2) == "T=")
             temp=parseFloat(elem[i].substr(2));
-        if(elem[i].substr(0,3) == "RH=")
-            rh=parseFloat(elem[i].substr(3));
-	if(localStorage["hw"] == "yes") {
+	if(localStorage[sensorid+"-rh"] == "yes") {
+            if(elem[i].substr(0,3) == "RH=")
+		rh=parseFloat(elem[i].substr(3));
+	}
+	if(localStorage[sensorid+"-rssi"] == "yes") {
             if(elem[i].substr(0,5) == "RSSI=")
 		rssi=parseFloat(elem[i].substr(5));
+	}
+	if(localStorage[sensorid+"-vmcu"] == "yes") {
             if(elem[i].substr(0,6) == "V_MCU=")
 		vmcu=parseFloat(elem[i].substr(6))*10;
 	}
@@ -210,26 +213,37 @@ function drawplot(options) {
 	
 	for(i=0;i<sensordat["series"].length;i++) {
 	    var series = { };
-	    try {
-		series.label = sensordat["series"][i];
-		series.data = sensordat[sensordat["series"][i]];
-		if(sensordat[sensordat["series"][i]]) {
-		    if(sensordat[sensordat["series"][i]].yaxis) {
-			series.yaxis = sensordat[sensordat["series"][i]].yaxis;
-		    }
-		    try {
-			addItem('<td><input type="checkbox" name="' + series.label + '" id="' + esc(series.label) + '" checked />' + series.label + "</td><td>" + series.data[series.data.length-1][1]+"</td>");
-			$('#' + esc(series.label) ).click(function() {
-			    if($('#' + esc(series.label) ).is(':checked')) {
-				$('#' + esc(series.label) ).attr('checked', false);
-			    } else {
-				$('#' + esc(series.label) ).attr('checked', true);
-			    }
-			});
-			data.push(series);
-		    } catch(err) {}
+
+	    series.label = sensordat["series"][i];
+
+	    console.log("Series: " + series.label + " = " + localStorage[series.label]);
+
+	    series.data = sensordat[sensordat["series"][i]];
+	    if(sensordat[sensordat["series"][i]]) {
+		if(sensordat[sensordat["series"][i]].yaxis) {
+		    series.yaxis = sensordat[sensordat["series"][i]].yaxis;
 		}
-	    } catch(err) {};
+		var ischecked = "checked";
+		var value;
+		console.log(series.label + " = " + localStorage[series.label]);
+		if(series.data[series.data.length-1]) value = series.data[series.data.length-1][1];
+		else value="na";
+		if(localStorage[series.label] == "no") ischecked = "";
+		addItem('<td><input type="checkbox" name="' + series.label + '" id="' + esc(series.label) + '" ' + ischecked + ' />' + series.label + "</td><td>" + value +"</td>");
+		$('[name="' + series.label + '"]' ).click(function(label) {
+		    return function () {
+			if(this.checked) {
+			    localStorage[label] = "yes";
+			    console.log(label + " = " + localStorage[label]);
+			} else {
+			    localStorage[label] = "no";
+			    console.log(label + " = " + localStorage[label]);
+			}
+		    }
+		}(series.label));
+		if(value != "na")
+		    data.push(series);
+	    }
 	}
 	
         // and plot all we got
